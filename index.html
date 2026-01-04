@@ -1,221 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI-Powered EDA Library Generator</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div class="container">
         <!-- Header Section -->
         <header class="header">
             <div class="header__content">
                 <h1>AI-Powered EDA Library Generator</h1>
-                <p class="header__subtitle">Automatically generate symbols and footprints for embedded components using AI</p>
+                <p class="header__subtitle">Generate KiCad symbols & footprints from datasheets using Gemini AI</p>
             </div>
         </header>
 
-        <!-- Main Input Section -->
-        <section class="card input-section">
-            <div class="card__body">
-                <h2>Component Information</h2>
-                <form id="componentForm" class="component-form">
-                    <div class="form-group">
-                        <label for="partNumber" class="form-label">Component Part Number</label>
-                        <input 
-                            type="text" 
-                            id="partNumber" 
-                            class="form-control part-input" 
-                            placeholder="e.g., STM32F407VGT6"
-                            required
-                        >
-                        <div class="part-suggestions">
-                            <span class="suggestion-label">Popular parts:</span>
-                            <div class="suggestion-tags" id="sampleParts"></div>
-                        </div>
+        <!-- Main Content Grid -->
+        <div class="main-grid">
+            <!-- Left Column: Controls & Chat -->
+            <div class="left-column">
+                <!-- Input Section -->
+                <section class="card input-section">
+                    <div class="card__body">
+                        <h2>Component Input</h2>
+                        <form id="componentForm" class="component-form">
+                            <div class="form-group">
+                                <label for="partNumber" class="form-label">Component Name / Part Number</label>
+                                <div class="input-group">
+                                    <input type="text" id="partNumber" class="form-control part-input"
+                                        placeholder="e.g., STM32F407VGT6" required>
+                                    <button type="submit" class="btn btn--primary" id="generateBtn">
+                                        <span class="btn-text">Generate</span>
+                                        <span class="btn-loader hidden">⚡</span>
+                                    </button>
+                                </div>
+                                <div class="part-suggestions">
+                                    <span class="suggestion-label">Try:</span>
+                                    <div class="suggestion-tags" id="sampleParts"></div>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="edaSoftware" class="form-label">EDA Software</label>
+                                    <select id="edaSoftware" class="form-control" required>
+                                        <option value="">Select Software</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="modelSelect" class="form-label">AI Model</label>
+                                    <select id="modelSelect" class="form-control"></select>
+                                </div>
+                            </div>
+
+                            <!-- Collapsible Settings -->
+                            <div class="settings-toggle">
+                                <button type="button" class="btn btn--sm btn--outline" id="toggleSettings">
+                                    ⚙️ Settings & API Key
+                                </button>
+                            </div>
+                            <div class="settings-panel hidden" id="settingsPanel">
+                                <div class="form-group">
+                                    <label for="apiKey" class="form-label">Gemini API Key</label>
+                                    <div class="api-key-input">
+                                        <input type="password" id="apiKey" class="form-control"
+                                            placeholder="Enter API Key">
+                                        <button type="button" class="btn-toggle-api" id="toggleApiKey">👁️</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="packageType" class="form-label">Package Type (Hint)</label>
+                                    <select id="packageType" class="form-control"></select>
+                                </div>
+                            </div>
+                        </form>
                     </div>
+                </section>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="edaSoftware" class="form-label">Target EDA Software</label>
-                            <select id="edaSoftware" class="form-control" required>
-                                <option value="">Select EDA Software</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="packageType" class="form-label">Package Type (Optional)</label>
-                            <select id="packageType" class="form-control">
-                            </select>
-                        </div>
+                <!-- Chat & Datasheet Section -->
+                <section class="card chat-section">
+                    <div class="card__header">
+                        <h3>AI Assistant & Datasheet</h3>
                     </div>
+                    <div class="card__body chat-body">
+                        <!-- File Upload Zone -->
+                        <div class="upload-zone" id="uploadZone">
+                            <input type="file" id="datasheetInput" accept=".pdf" hidden>
+                            <div class="upload-content">
+                                <span class="upload-icon">📄</span>
+                                <p class="upload-text">Drag & drop datasheet PDF or click to upload</p>
+                                <p class="upload-subtext">AI will analyze the file for accurate generation</p>
+                            </div>
+                            <div class="file-info hidden" id="fileInfo">
+                                <span class="file-name">datasheet.pdf</span>
+                                <button type="button" class="btn-remove-file" id="removeFile">✕</button>
+                            </div>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="apiKey" class="form-label">Gemini API Key</label>
-                        <div class="api-key-input">
-                            <input 
-                                type="password" 
-                                id="apiKey" 
-                                class="form-control" 
-                                placeholder="Enter your Gemini Flash 2.0 API key"
-                                required
-                            >
-                            <button type="button" class="btn-toggle-api" id="toggleApiKey">
-                                <span class="toggle-icon">👁️</span>
+                        <!-- Chat Messages -->
+                        <div class="chat-messages" id="chatMessages">
+                            <div class="message message--ai">
+                                <div class="message__avatar">🤖</div>
+                                <div class="message__content">
+                                    Hello! I'm your EDA Assistant. Upload a datasheet or enter a component name, and
+                                    I'll help you generate symbols, footprints, and answer technical questions.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Input -->
+                        <div class="chat-input-area">
+                            <textarea id="chatInput" class="form-control chat-textarea"
+                                placeholder="Ask about the datasheet or request changes..." rows="1"></textarea>
+                            <button type="button" class="btn btn--primary btn--icon" id="sendMessageBtn">
+                                📤
                             </button>
                         </div>
-                        <small class="api-help">
-                            Get your free API key at <a href="https://ai.google.dev/" target="_blank">ai.google.dev</a> 
-                            (1500 requests/minute free tier)
-                        </small>
                     </div>
-                </form>
+                </section>
             </div>
-        </section>
 
-        <!-- Configuration Section -->
-        <section class="card config-section">
-            <div class="card__body">
-                <h3>Generation Options</h3>
-                <div class="config-options">
-                    <div class="checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="generateSymbol" checked>
-                            <span class="checkmark"></span>
-                            Generate Symbol
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="generateFootprint" checked>
-                            <span class="checkmark"></span>
-                            Generate Footprint
-                        </label>
-                    </div>
-
-                    <div class="advanced-toggle">
-                        <button type="button" class="btn btn--outline btn--sm" id="toggleAdvanced">
-                            <span>Advanced Options</span>
-                            <span class="toggle-arrow">▼</span>
-                        </button>
-                    </div>
-
-                    <div class="advanced-options hidden" id="advancedOptions">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Pin Numbering</label>
-                                <select class="form-control">
-                                    <option>Auto (Based on Package)</option>
-                                    <option>Counter-clockwise from pin 1</option>
-                                    <option>Left-to-right, top-to-bottom</option>
-                                </select>
+            <!-- Right Column: Preview & Results -->
+            <div class="right-column">
+                <section class="card preview-section">
+                    <div class="card__header preview-header">
+                        <h3>Library Preview</h3>
+                        <div class="preview-controls">
+                            <div class="preview-tabs">
+                                <button class="tab-btn active" data-tab="symbol">Symbol</button>
+                                <button class="tab-btn" data-tab="footprint">Footprint</button>
                             </div>
-                            <div class="form-group">
-                                <label class="form-label">Units</label>
-                                <select class="form-control">
-                                    <option>Metric (mm)</option>
-                                    <option>Imperial (mil)</option>
-                                </select>
-                            </div>
+                            <button class="btn btn--sm btn--outline" id="downloadBtn" disabled>
+                                📦 Download
+                            </button>
                         </div>
                     </div>
-                </div>
-
-                <button type="submit" form="componentForm" class="btn btn--primary btn--lg btn--full-width generate-btn" id="generateBtn">
-                    <span class="btn-text">Generate Library</span>
-                    <span class="btn-loader hidden">⚡ Processing...</span>
-                </button>
-            </div>
-        </section>
-
-        <!-- Process Flow Display -->
-        <section class="card workflow-section">
-            <div class="card__body">
-                <h3>AI Generation Workflow</h3>
-                <div class="workflow-steps" id="workflowSteps">
-                    <!-- Steps will be populated by JavaScript -->
-                </div>
-            </div>
-        </section>
-
-        <!-- Results Section -->
-        <section class="card results-section hidden" id="resultsSection">
-            <div class="card__body">
-                <h3>Generated Library</h3>
-                <div class="results-grid">
-                    <div class="preview-area">
-                        <div class="preview-tabs">
-                            <button class="tab-btn active" data-tab="symbol">Symbol Preview</button>
-                            <button class="tab-btn" data-tab="footprint">Footprint Preview</button>
-                        </div>
-                        <div class="preview-content">
+                    <div class="card__body preview-body">
+                        <div class="preview-canvas-container" id="previewContainer">
                             <div class="preview-placeholder">
                                 <span class="preview-icon">⚡</span>
-                                <p>Generated symbol will appear here</p>
+                                <p>Generated content will appear here</p>
                             </div>
+                            <canvas id="previewCanvas" class="hidden"></canvas>
+                        </div>
+                        <div class="generation-status hidden" id="generationStatus">
+                            <div class="status-step" id="statusStep1">🔍 Analyzing...</div>
+                            <div class="status-step" id="statusStep2">📐 Extracting Dimensions...</div>
+                            <div class="status-step" id="statusStep3">⚡ Generating Symbol...</div>
+                            <div class="status-step" id="statusStep4">🔲 Generating Footprint...</div>
                         </div>
                     </div>
-                    <div class="download-area">
-                        <h4>Download Files</h4>
-                        <div class="download-buttons">
-                            <button class="btn btn--primary">
-                                📦 Download Library
-                            </button>
-                            <button class="btn btn--outline">
-                                📄 View Datasheet
-                            </button>
-                        </div>
-                        <div class="component-specs">
-                            <h5>Component Specifications</h5>
-                            <div class="specs-list">
-                                <div class="spec-item">
-                                    <span class="spec-label">Package:</span>
-                                    <span class="spec-value">LQFP-100</span>
-                                </div>
-                                <div class="spec-item">
-                                    <span class="spec-label">Pin Count:</span>
-                                    <span class="spec-value">100</span>
-                                </div>
-                                <div class="spec-item">
-                                    <span class="spec-label">Body Size:</span>
-                                    <span class="spec-value">14.0 × 14.0 mm</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                </section>
             </div>
-        </section>
-
-        <!-- Features Section -->
-        <section class="features-section">
-            <h3>Key Features</h3>
-            <div class="features-grid" id="featuresGrid">
-                <!-- Features will be populated by JavaScript -->
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-links">
-                    <a href="#" target="_blank">📚 Documentation</a>
-                    <a href="#" target="_blank">🔗 GitHub Repository</a>
-                    <a href="#" target="_blank">🐛 Report Issues</a>
-                </div>
-                <div class="footer-stats">
-                    <div class="stat-item">
-                        <span class="stat-value">1,247</span>
-                        <span class="stat-label">Components Generated</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-value">98.5%</span>
-                        <span class="stat-label">Success Rate</span>
-                    </div>
-                </div>
-            </div>
-        </footer>
+        </div>
     </div>
 
+    <script src="js/gemini-client.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>
